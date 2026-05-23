@@ -3,13 +3,18 @@ from forexfactory_scraper import fetch_and_parse_xml
 
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {"message": "Endpoint is live. Ping /calendar for data."}
+# This variable keeps the last successful data in memory
+last_data = []
 
 @app.get("/calendar")
 def get_calendar():
+    global last_data
     events = fetch_and_parse_xml()
-    if not events:
-        return {"success": False, "data": []}
-    return {"success": True, "data": events}
+    
+    if events:
+        # If we got data, save it as the new "last_data"
+        last_data = events
+        return {"success": True, "data": events}
+    else:
+        # If scraper failed, return the cached data instead
+        return {"success": True, "data": last_data, "note": "cached"}
